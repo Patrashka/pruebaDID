@@ -73,33 +73,9 @@ body {
     border-radius: 15px;
     background: #f7fafc;
     border: 2px dashed #e2e8f0;
-    display: block;
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
-}
-
-/* Estilos para el avatar D-ID */
-.avatar-container iframe {
-    width: 100% !important;
-    height: 100% !important;
-    border: none !important;
-    border-radius: 15px !important;
-    display: block !important;
-}
-
-/* Estilos para el contenido del avatar */
-.avatar-container > div {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 15px !important;
-}
-
-/* Estilos específicos para D-ID Agent */
-[data-did-agent] {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 15px !important;
 }
 
 .avatar-loading {
@@ -459,11 +435,25 @@ body {
     }
 }
 
-/* Estilos adicionales para D-ID */
+/* --- FIX: Forzar altura del avatar D-ID --- */
+#avatar-container,
+#avatar-container iframe,
+#avatar-container > div,
+[data-did-agent],
 .did-agent-container {
     width: 100% !important;
-    height: 100% !important;
+    height: 500px !important;
+    min-height: 500px !important;
+    display: block !important;
     border-radius: 15px !important;
+    overflow: hidden;
+}
+
+#avatar-container {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: #f7fafc;
 }
 
 /* Mejoras de accesibilidad */
