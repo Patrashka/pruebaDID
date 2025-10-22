@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Médico - Prueba Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn:disabled { background: #6c757d; cursor: not-allowed; }
+        #videoContainer {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #avatarVideo {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+        .config-display {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Avatar Médico Virtual - Prueba Simple</h1>
+        
+        <div id="statusContainer">
+            <div class="status warning">Cargando configuración...</div>
+        </div>
+        
+        <div class="config-display" id="configDisplay">
+            Cargando configuración...
+        </div>
+        
+        <div id="videoContainer">
+            <div id="videoPlaceholder">
+                <p>🎥 El avatar aparecerá aquí</p>
+                <p>Haz clic en "Conectar" para comenzar</p>
+            </div>
+            <video id="avatarVideo" autoplay muted playsinline style="display: none;"></video>
+        </div>
+        
+        <div>
+            <button id="connectBtn" class="btn" disabled>Conectar Avatar</button>
+            <button id="disconnectBtn" class="btn" disabled>Desconectar</button>
+            <button id="testBtn" class="btn">Probar Configuración</button>
+        </div>
+        
+        <div id="messages" style="margin-top: 20px; max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+        </div>
+    </div>
+
+    <script type="module">
+        // Importar D-ID SDK
+        import * as sdk from 'https://unpkg.com/@d-id/client-sdk@latest/dist/index.js';
+
+        // Variables globales
+        let agentManager = null;
+        let srcObject = null;
+        let didConfig = { clientKey: '', agentId: '' };
+
+        // Elementos DOM
+        const statusContainer = document.getElementById('statusContainer');
+        const configDisplay = document.getElementById('configDisplay');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const testBtn = document.getElementById('testBtn');
+        const avatarVideo = document.getElementById('avatarVideo');
+        const videoPlaceholder = document.getElementById('videoPlaceholder');
+        const messages = document.getElementById('messages');
+
+        // Función para mostrar mensajes
+        function addMessage(type, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status ${type}`;
+            messageDiv.textContent = content;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Función para actualizar estado
+        function updateStatus(type, message) {
+            statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Cargar configuración desde el servidor
+        async function loadConfig() {
+            try {
+                updateStatus('warning', 'Cargando configuración...');
+                
+                const response = await fetch('/api/did/config');
+                const config = await response.json();
+                
+                configDisplay.innerHTML = `
+                    Agent ID: ${config.agent_id}<br>
+                    Client Key: ${config.client_key ? config.client_key.substring(0, 20) + '...' : 'No configurado'}<br>
+                    Status: ${config.status}
+                `;
+                
+                if (config.status === 'ready') {
+                    didConfig = {
+                        clientKey: config.client_key,
+                        agentId: config.agent_id
+                    };
+                    
+                    updateStatus('success', '✅ Configuración D-ID lista');
+                    connectBtn.disabled = false;
+                    addMessage('success', 'Configuración cargada correctamente');
+                } else {
+                    updateStatus('error', '❌ Configuración D-ID incompleta');
+                    addMessage('error', 'Configuración incompleta: ' + config.status);
+                }
+                
+            } catch (error) {
+                updateStatus('error', '❌ Error cargando configuración');
+                addMessage('error', 'Error: ' + error.message);
+            }
+        }
+
+        // Callbacks para D-ID SDK
+        const callbacks = {
+            onSrcObjectReady(value) {
+                console.log('Video stream ready');
+                avatarVideo.srcObject = value;
+                srcObject = value;
+                avatarVideo.style.display = 'block';
+                videoPlaceholder.style.display = 'none';
+                addMessage('success', 'Video stream conectado');
+                return srcObject;
+            },
+
+            onVideoStateChange(state) {
+                console.log('Video state changed:', state);
+                addMessage('warning', `Estado del video: ${state}`);
+            },
+
+            onConnectionStateChange(state) {
+                console.log('Connection state changed:', state);
+                addMessage('warning', `Estado de conexión: ${state}`);
+                
+                if (state === "connected") {
+                    updateStatus('success', '✅ Conectado al avatar');
+                    disconnectBtn.disabled = false;
+                } else if (state === "disconnected") {
+                    updateStatus('warning', '⚠️ Desconectado');
+                    disconnectBtn.disabled = true;
+                }
+            },
+
+            onNewMessage(messages, type) {
+                console.log('New message:', messages, type);
+                if (type === "answer" && messages.length > 0) {
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage.role === "assistant") {
+                        addMessage('success', `Avatar: ${lastMessage.content}`);
+                    }
+                }
+            },
+
+            onError(error, errorData) {
+                console.error('D-ID Error:', error, errorData);
+                addMessage('error', `Error D-ID: ${error}`);
+                updateStatus('error', '❌ Error en avatar');
+            }
+        };
+
+        // Conectar al avatar
+        async function connectToAvatar() {
+            if (!didConfig.clientKey || !didConfig.agentId) {
+                addMessage('error', 'Configuración D-ID no disponible');
+                return;
+            }
+
+            try {
+                connectBtn.disabled = true;
+                updateStatus('warning', 'Conectando al avatar...');
+                addMessage('warning', 'Iniciando conexión...');
+
+                const auth = { 
+                    type: 'key', 
+                    clientKey: didConfig.clientKey 
+                };
+
+                const streamOptions = {
+                    compatibilityMode: "auto",
+                    streamWarmup: true
+                };
+
+                agentManager = await sdk.createAgentManager(
+                    didConfig.agentId, 
+                    { auth, callbacks, streamOptions }
+                );
+
+                await agentManager.connect();
+                addMessage('success', 'Conectado al avatar exitosamente');
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                addMessage('error', `Error de conexión: ${error.message}`);
+                updateStatus('error', '❌ Error de conexión');
+                connectBtn.disabled = false;
+            }
+        }
+
+        // Desconectar del avatar
+        async function disconnectFromAvatar() {
+            if (agentManager) {
+                try {
+                    await agentManager.disconnect();
+                    agentManager = null;
+                    avatarVideo.style.display = 'none';
+                    videoPlaceholder.style.display = 'block';
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    updateStatus('warning', '⚠️ Desconectado');
+                    addMessage('warning', 'Desconectado del avatar');
+                } catch (error) {
+                    addMessage('error', 'Error al desconectar: ' + error.message);
+                }
+            }
+        }
+
+        // Probar configuración
+        async function testConfig() {
+            addMessage('warning', 'Probando configuración...');
+            await loadConfig();
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connectToAvatar);
+        disconnectBtn.addEventListener('click', disconnectFromAvatar);
+        testBtn.addEventListener('click', testConfig);
+
+        // Cargar configuración al iniciar
+        loadConfig();
+    </script>
+</body>
+</html>

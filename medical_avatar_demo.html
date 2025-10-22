@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Médico Virtual - D-ID Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .avatar-section {
+            text-align: center;
+        }
+
+        .video-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px dashed #dee2e6;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #avatarVideo {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .video-placeholder {
+            color: #6c757d;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .chat-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .chat-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-disconnected {
+            background: #dc3545;
+        }
+
+        .status-connecting {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+
+        .status-connected {
+            background: #28a745;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .message.system {
+            background: #fff3cd;
+            color: #856404;
+            text-align: center;
+            font-style: italic;
+            max-width: 100%;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .audio-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .findings-panel {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .findings-panel h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .finding-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .finding-urgent {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .finding-followup {
+            border-left-color: #17a2b8;
+            background: #d1ecf1;
+        }
+
+        .config-section {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h4 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .config-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sección del Avatar -->
+        <div class="avatar-section">
+            <h1>🤖 Avatar Médico Virtual</h1>
+            
+            <div class="video-container">
+                <video id="avatarVideo" autoplay muted playsinline></video>
+                <div class="video-placeholder" id="videoPlaceholder">
+                    <p>🎥 El avatar aparecerá aquí</p>
+                    <p>Conecta para comenzar la consulta</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="connectBtn" class="btn btn-primary">Conectar</button>
+                <button id="disconnectBtn" class="btn btn-danger" disabled>Desconectar</button>
+            </div>
+
+            <div class="config-section">
+                <h4>⚙️ Configuración D-ID</h4>
+                <input type="text" id="clientKey" class="config-input" placeholder="Client Key de D-ID">
+                <input type="text" id="agentId" class="config-input" placeholder="Agent ID de D-ID">
+                <button id="loadConfigBtn" class="btn btn-success">Cargar Configuración</button>
+            </div>
+        </div>
+
+        <!-- Sección de Chat -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <h2>💬 Consulta Médica</h2>
+                <p>
+                    <span id="connectionStatus" class="status-indicator status-disconnected"></span>
+                    <span id="statusText">Desconectado</span>
+                </p>
+            </div>
+
+            <div id="messages" class="chat-messages">
+                <div class="message system">
+                    Bienvenido a la consulta médica virtual. Presiona "Conectar" para comenzar.
+                </div>
+            </div>
+
+            <div class="audio-controls">
+                <input type="file" id="audioInput" accept="audio/*" class="audio-input">
+                <button id="sendAudioBtn" class="btn btn-primary" disabled>Enviar Audio</button>
+            </div>
+
+            <div class="findings-panel" id="findingsPanel" style="display: none;">
+                <h4>📋 Hallazgos Médicos</h4>
+                <div id="findingsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- D-ID SDK -->
+    <script type="module">
+        // Importar D-ID SDK
+        import * as sdk from 'https://unpkg.com/@d-id/client-sdk@latest/dist/index.js';
+
+        // Variables globales
+        let agentManager = null;
+        let currentSessionId = null;
+        let srcObject = null;
+
+        // Elementos DOM
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const avatarVideo = document.getElementById('avatarVideo');
+        const videoPlaceholder = document.getElementById('videoPlaceholder');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const statusText = document.getElementById('statusText');
+        const messagesContainer = document.getElementById('messages');
+        const audioInput = document.getElementById('audioInput');
+        const sendAudioBtn = document.getElementById('sendAudioBtn');
+        const findingsPanel = document.getElementById('findingsPanel');
+        const findingsList = document.getElementById('findingsList');
+        const clientKeyInput = document.getElementById('clientKey');
+        const agentIdInput = document.getElementById('agentId');
+        const loadConfigBtn = document.getElementById('loadConfigBtn');
+
+        // Configuración D-ID
+        let didConfig = {
+            clientKey: '',
+            agentId: ''
+        };
+
+        // Cargar configuración desde el servidor
+        async function loadConfigFromServer() {
+            try {
+                const response = await fetch('/api/did/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    
+                    // Verificar si la configuración está completa
+                    if (config.agent_id && config.agent_id !== 'not_configured' && 
+                        config.client_key && config.client_key !== 'not_configured') {
+                        
+                        didConfig = {
+                            clientKey: config.client_key,
+                            agentId: config.agent_id
+                        };
+                        
+                        clientKeyInput.value = config.client_key;
+                        agentIdInput.value = config.agent_id;
+                        addMessage('system', '✅ Configuración D-ID cargada correctamente');
+                        
+                        // Habilitar el botón de conectar
+                        connectBtn.disabled = false;
+                        
+                    } else {
+                        addMessage('system', '⚠️ Configuración D-ID incompleta. Configura manualmente.');
+                    }
+                } else {
+                    addMessage('system', '❌ No hay configuración en el servidor. Configura manualmente.');
+                }
+            } catch (error) {
+                addMessage('system', '❌ Error al cargar configuración: ' + error.message);
+            }
+        }
+
+        // Cargar configuración manual
+        function loadManualConfig() {
+            const clientKey = clientKeyInput.value.trim();
+            const agentId = agentIdInput.value.trim();
+            
+            if (!clientKey || !agentId) {
+                addMessage('system', 'Por favor, ingresa tanto el Client Key como el Agent ID');
+                return;
+            }
+
+            didConfig = { clientKey, agentId };
+            addMessage('system', 'Configuración manual cargada correctamente');
+        }
+
+        // Callbacks para D-ID SDK
+        const callbacks = {
+            onSrcObjectReady(value) {
+                console.log('Video stream ready');
+                avatarVideo.srcObject = value;
+                srcObject = value;
+                avatarVideo.style.display = 'block';
+                videoPlaceholder.style.display = 'none';
+                return srcObject;
+            },
+
+            onVideoStateChange(state) {
+                console.log('Video state changed:', state);
+                if (state === "STOP") {
+                    avatarVideo.srcObject = undefined;
+                    // Aquí podrías cargar un video idle si lo tienes
+                } else {
+                    avatarVideo.srcObject = srcObject;
+                }
+            },
+
+            onConnectionStateChange(state) {
+                console.log('Connection state changed:', state);
+                updateConnectionStatus(state);
+                
+                if (state === "connected") {
+                    addMessage('system', '✅ Conectado al avatar médico');
+                    sendAudioBtn.disabled = false;
+                } else if (state === "disconnected") {
+                    addMessage('system', '❌ Desconectado del avatar');
+                    sendAudioBtn.disabled = true;
+                }
+            },
+
+            onNewMessage(messages, type) {
+                console.log('New message:', messages, type);
+                if (type === "answer" && messages.length > 0) {
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage.role === "assistant") {
+                        addMessage('assistant', lastMessage.content);
+                    }
+                }
+            },
+
+            onError(error, errorData) {
+                console.error('D-ID Error:', error, errorData);
+                addMessage('system', `❌ Error: ${error}`);
+            }
+        };
+
+        // Opciones de stream
+        const streamOptions = {
+            compatibilityMode: "auto",
+            streamWarmup: true
+        };
+
+        // Conectar al avatar
+        async function connectToAvatar() {
+            if (!didConfig.clientKey || !didConfig.agentId) {
+                addMessage('system', '❌ Configura D-ID primero');
+                return;
+            }
+
+            try {
+                connectBtn.disabled = true;
+                addMessage('system', '🔄 Conectando al avatar...');
+
+                const auth = { 
+                    type: 'key', 
+                    clientKey: didConfig.clientKey 
+                };
+
+                agentManager = await sdk.createAgentManager(
+                    didConfig.agentId, 
+                    { auth, callbacks, streamOptions }
+                );
+
+                await agentManager.connect();
+                currentSessionId = generateSessionId();
+                addMessage('system', `Sesión iniciada: ${currentSessionId}`);
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                addMessage('system', `❌ Error de conexión: ${error.message}`);
+                connectBtn.disabled = false;
+            }
+        }
+
+        // Desconectar del avatar
+        async function disconnectFromAvatar() {
+            if (agentManager) {
+                try {
+                    await agentManager.disconnect();
+                    agentManager = null;
+                    currentSessionId = null;
+                    avatarVideo.style.display = 'none';
+                    videoPlaceholder.style.display = 'block';
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    sendAudioBtn.disabled = true;
+                } catch (error) {
+                    console.error('Disconnect error:', error);
+                }
+            }
+        }
+
+        // Enviar audio al avatar
+        async function sendAudioToAvatar() {
+            const file = audioInput.files[0];
+            if (!file) {
+                addMessage('system', '❌ Selecciona un archivo de audio');
+                return;
+            }
+
+            if (!agentManager) {
+                addMessage('system', '❌ Conecta al avatar primero');
+                return;
+            }
+
+            try {
+                sendAudioBtn.disabled = true;
+                addMessage('system', '🔄 Procesando audio...');
+
+                // Crear FormData para enviar al servidor
+                const formData = new FormData();
+                formData.append('audio', file);
+                formData.append('session_id', currentSessionId);
+
+                // Enviar al endpoint de procesamiento médico
+                const response = await fetch('/api/ai/did-medical-avatar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    addMessage('user', result.user_input);
+                    addMessage('assistant', result.ai_response);
+                    
+                    // Enviar respuesta al avatar
+                    await agentManager.speak({
+                        type: "text",
+                        input: result.ai_response
+                    });
+
+                    // Mostrar hallazgos si los hay
+                    if (result.findings_count > 0) {
+                        showFindings(currentSessionId);
+                    }
+
+                } else {
+                    addMessage('system', `❌ Error: ${result.error}`);
+                }
+
+            } catch (error) {
+                console.error('Send audio error:', error);
+                addMessage('system', `❌ Error al procesar audio: ${error.message}`);
+            } finally {
+                sendAudioBtn.disabled = false;
+                audioInput.value = '';
+            }
+        }
+
+        // Mostrar hallazgos médicos
+        async function showFindings(sessionId) {
+            try {
+                const response = await fetch(`/api/ai/medical-findings/${sessionId}`);
+                const data = await response.json();
+                
+                if (data.findings && data.findings.length > 0) {
+                    findingsPanel.style.display = 'block';
+                    findingsList.innerHTML = '';
+                    
+                    data.findings.forEach(finding => {
+                        const findingDiv = document.createElement('div');
+                        findingDiv.className = `finding-item finding-${finding.severity}`;
+                        findingDiv.innerHTML = `
+                            <strong>${new Date(finding.timestamp).toLocaleTimeString()}</strong><br>
+                            ${finding.finding}
+                        `;
+                        findingsList.appendChild(findingDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading findings:', error);
+            }
+        }
+
+        // Actualizar estado de conexión
+        function updateConnectionStatus(state) {
+            connectionStatus.className = 'status-indicator';
+            
+            switch (state) {
+                case 'connected':
+                    connectionStatus.classList.add('status-connected');
+                    statusText.textContent = 'Conectado';
+                    disconnectBtn.disabled = false;
+                    break;
+                case 'connecting':
+                    connectionStatus.classList.add('status-connecting');
+                    statusText.textContent = 'Conectando...';
+                    break;
+                case 'disconnected':
+                case 'closed':
+                    connectionStatus.classList.add('status-disconnected');
+                    statusText.textContent = 'Desconectado';
+                    disconnectBtn.disabled = true;
+                    break;
+                default:
+                    connectionStatus.classList.add('status-disconnected');
+                    statusText.textContent = state;
+            }
+        }
+
+        // Agregar mensaje al chat
+        function addMessage(type, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = content;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Generar ID de sesión
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connectToAvatar);
+        disconnectBtn.addEventListener('click', disconnectFromAvatar);
+        sendAudioBtn.addEventListener('click', sendAudioToAvatar);
+        loadConfigBtn.addEventListener('click', loadManualConfig);
+
+        // Cargar configuración al iniciar
+        loadConfigFromServer();
+
+        // Manejar archivos de audio
+        audioInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                sendAudioBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
