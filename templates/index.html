@@ -22,8 +22,11 @@
             <!-- Avatar Section -->
             <div class="avatar-section">
                 <div class="avatar-container" id="avatar-container">
-                    <!-- Video objetivo del Agents SDK -->
-                    <video id="did-video" autoplay playsinline muted></video>
+                    <!-- D-ID Avatar se cargará aquí -->
+                    <div class="avatar-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando avatar médico...</p>
+                    </div>
                 </div>
                 
                 <!-- Status del Avatar -->
@@ -91,41 +94,19 @@
         </footer>
     </div>
 
-    <!-- D-ID Agents SDK (ESM) -->
-    <script type="module">
-        import * as sdk from "https://unpkg.com/@d-id/client-sdk@latest/dist/index.mjs";
-
-        // Reemplaza con tus valores reales desde Studio > Embed
-        const agentId = "v2_agt_gRs4QB2l";
-        const auth = { type: "key", clientKey: "Z29vZ2xlLW9hdXRoMnwxMTU1ODgzNDk4MjgyOTQ5MzYwNzM6SHFkdzdaU0gtMklRZ29Nb2Rvb0JS" };
-
-        const videoEl = document.getElementById("did-video");
-        let srcObject;
-
-        const callbacks = {
-            onSrcObjectReady(value){
-                videoEl.srcObject = value;
-                srcObject = value;
-                return value;
-            },
-            onConnectionStateChange(state){ console.log("D-ID connection:", state); },
-            onVideoStateChange(state){ console.log("D-ID video:", state); },
-            onError(error, data){ console.error("D-ID SDK error", error, data); }
-        };
-
-        const streamOptions = { compatibilityMode: "on", streamWarmup: true };
-
-        try {
-            const agentManager = await sdk.createAgentManager(agentId, { auth, callbacks, streamOptions });
-            await agentManager.connect();
-            window.didAgent = {
-                agentManager,
-                speak: (text) => agentManager.speak({ type: "text", input: text }),
-                chat: (text) => agentManager.chat(text)
-            };
-        } catch (e) {
-            console.error("No se pudo inicializar el Agents SDK", e);
-        }
+    <!-- D-ID Agent Script -->
+    <script type="module"
+        src="https://agent.d-id.com/v2/index.js"
+        data-mode="full"
+        data-client-key="Z29vZ2xlLW9hdXRoMnwxMTU1ODgzNDk4MjgyOTQ5MzYwNzM6SHFkdzdaU0gtMklRZ29Nb2Rvb0JS"
+        data-agent-id="v2_agt_gRs4QB2l"
+        data-name="did-agent"
+        data-monitor="true"
+        data-target-id="avatar-container"
+        data-width="100%"
+        data-height="600px"
+        data-aspect-ratio="16:9"
+        data-orientation="horizontal">
     </script>
 
     <!-- Custom JavaScript -->
