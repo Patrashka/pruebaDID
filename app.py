@@ -13,7 +13,13 @@ app = Flask(__name__)
 CORS(app)
 
 # Configurar Google Gemini
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+api_key = os.getenv('GOOGLE_API_KEY')
+if not api_key:
+    print("⚠️ WARNING: GOOGLE_API_KEY no está configurada!")
+else:
+    print(f"✓ GOOGLE_API_KEY encontrada: {api_key[:8]}...")
+    
+genai.configure(api_key=api_key)
 
 # Crear directorio para reportes si no existe
 if not os.path.exists('reportes'):
@@ -36,6 +42,11 @@ Responde de manera clara, concisa y profesional."""
 def index():
     """Página principal con el avatar D-ID"""
     return render_template('index.html')
+
+@app.route('/test')
+def test():
+    """Página de prueba para debugging"""
+    return render_template('index_simple.html')
 
 @app.route('/api/consulta', methods=['POST'])
 def procesar_consulta():
@@ -73,7 +84,13 @@ def procesar_consulta():
         })
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ Error en consulta: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': f'Error al procesar consulta: {str(e)}',
+            'tipo_error': type(e).__name__
+        }), 500
 
 @app.route('/api/generar-reporte', methods=['POST'])
 def generar_reporte_endpoint():

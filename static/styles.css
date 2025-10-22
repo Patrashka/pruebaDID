@@ -84,13 +84,21 @@ header h1 {
 .avatar-container {
     background: #f1f5f9;
     border-radius: 15px;
-    min-height: 400px;
+    min-height: 500px;
+    height: 500px;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
     border: 2px solid var(--border-color);
     overflow: hidden;
+    position: relative;
+}
+
+.avatar-container > * {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .avatar-status {
