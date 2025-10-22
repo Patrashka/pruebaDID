@@ -48,6 +48,38 @@ def test():
     """Página de prueba para debugging"""
     return render_template('index_simple.html')
 
+@app.route('/api/test-gemini', methods=['GET'])
+def test_gemini():
+    """Endpoint para probar la conexión con Gemini"""
+    try:
+        api_key = os.getenv('GOOGLE_API_KEY')
+        
+        if not api_key:
+            return jsonify({
+                'error': 'GOOGLE_API_KEY no está configurada',
+                'solucion': 'Configura GOOGLE_API_KEY en las variables de entorno de Vercel'
+            }), 400
+        
+        # Intentar generar contenido simple
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content("Di hola")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Conexión con Gemini exitosa',
+            'respuesta': response.text,
+            'api_key_preview': f'{api_key[:8]}...{api_key[-4:]}' if len(api_key) > 12 else 'key muy corta'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'tipo_error': type(e).__name__,
+            'traceback': traceback.format_exc(),
+            'api_key_configurada': bool(os.getenv('GOOGLE_API_KEY'))
+        }), 500
+
 @app.route('/api/consulta', methods=['POST'])
 def procesar_consulta():
     """
@@ -60,8 +92,8 @@ def procesar_consulta():
         if not consulta:
             return jsonify({'error': 'No se proporcionó consulta'}), 400
         
-        # Generar respuesta con Google Gemini
-        model = genai.GenerativeModel('gemini-pro')
+        # Generar respuesta con Google Gemini (versión gratuita usa flash)
+        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt_completo = f"{SYSTEM_PROMPT}\n\nConsulta del paciente: {consulta}"
         
         response = model.generate_content(
@@ -132,7 +164,7 @@ Genera un reporte médico que incluya:
 
 Formato: JSON con las siguientes claves: resumen, sintomas, recomendaciones, acciones, urgencia"""
 
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(
             prompt_reporte,
             generation_config={

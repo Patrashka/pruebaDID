@@ -13,8 +13,8 @@
 # Obtén tu API key en: https://makersuite.google.com/app/apikey
 GOOGLE_API_KEY=tu_api_key_de_google_aqui
 
-# Modelo a usar (gemini-pro, etc.)
-GEMINI_MODEL=gemini-pro
+# Modelo a usar (gemini-1.5-flash es gratis, gemini-pro requiere pago)
+GEMINI_MODEL=gemini-1.5-flash
 
 # ===== CONFIGURACIÓN FLASK =====
 # Entorno: development, production, testing
