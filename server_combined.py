@@ -73,6 +73,11 @@ def serve_tmp_file(filename):
     tmp_dir = "/tmp"
     return send_from_directory(tmp_dir, filename, mimetype="audio/mpeg")
 
+@app.route('/favicon.ico')
+def favicon():
+    """Evita 404 por favicon cuando no existe archivo físico."""
+    return ("", 204)
+
 # ===== IA: Doctor (XML ONLY) =====
 @app.post("/api/ai/doctor")
 def ai_doctor():
@@ -691,6 +696,11 @@ def index():
 def health_check():
     """Health check para Vercel"""
     return jsonify({"status": "ok", "message": "Consulta Médica Virtual API funcionando"})
+
+@app.route("/avatar-test")
+def avatar_test():
+    """Página mínima solo con el embed del avatar D-ID para aislar estilos."""
+    return render_template("avatar_min.html")
 
 @app.route("/api/test-gemini")
 def test_gemini():
