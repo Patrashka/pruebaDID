@@ -69,7 +69,7 @@ body {
 
 .avatar-container {
     width: 100%;
-    height: 600px;
+    aspect-ratio: 3 / 4;         /* proporción vertical tipo retrato */
     border-radius: 15px;
     background: #f7fafc;
     border: 2px dashed #e2e8f0;
@@ -79,7 +79,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    aspect-ratio: 16/9;
+
 }
 
 .avatar-loading {
@@ -570,4 +570,15 @@ button:focus, textarea:focus {
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+.avatar-container iframe,
+.avatar-container > div,
+.avatar-container [data-did-agent] {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    display: block !important;
 }
