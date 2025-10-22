@@ -73,39 +73,33 @@ body {
     border-radius: 15px;
     background: #f7fafc;
     border: 2px dashed #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     margin-bottom: 20px;
 }
 
-.avatar-container > * {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 15px;
-    min-width: 100% !important;
-    min-height: 100% !important;
-}
-
-/* Estilos específicos para el iframe de D-ID */
+/* Estilos para el avatar D-ID */
 .avatar-container iframe {
     width: 100% !important;
     height: 100% !important;
-    min-width: 100% !important;
-    min-height: 100% !important;
     border: none !important;
     border-radius: 15px !important;
     display: block !important;
 }
 
-/* Asegurar que el contenido del avatar sea visible */
-.avatar-container [data-did-agent] {
+/* Estilos para el contenido del avatar */
+.avatar-container > div {
     width: 100% !important;
     height: 100% !important;
-    min-width: 100% !important;
-    min-height: 100% !important;
+    border-radius: 15px !important;
+}
+
+/* Estilos específicos para D-ID Agent */
+[data-did-agent] {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 15px !important;
 }
 
 .avatar-loading {
@@ -465,46 +459,11 @@ body {
     }
 }
 
-/* Estilos para el avatar de D-ID */
-.avatar-container iframe {
-    border: none !important;
+/* Estilos adicionales para D-ID */
+.did-agent-container {
+    width: 100% !important;
+    height: 100% !important;
     border-radius: 15px !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-width: 100% !important;
-    min-height: 100% !important;
-    display: block !important;
-}
-
-/* Forzar dimensiones del avatar D-ID */
-.avatar-container [id*="did"] {
-    width: 100% !important;
-    height: 100% !important;
-    min-width: 100% !important;
-    min-height: 100% !important;
-}
-
-/* Estilos para el widget de D-ID */
-.avatar-container .did-agent-widget {
-    width: 100% !important;
-    height: 100% !important;
-    min-width: 100% !important;
-    min-height: 100% !important;
-}
-
-/* Estilos para el widget flotante de D-ID */
-.did-agent-widget {
-    position: relative !important;
-    width: 100% !important;
-    height: 500px !important;
-    min-height: 500px !important;
-}
-
-/* Asegurar que el widget se muestre correctamente */
-[data-did-agent] {
-    width: 100% !important;
-    height: 500px !important;
-    min-height: 500px !important;
 }
 
 /* Mejoras de accesibilidad */
