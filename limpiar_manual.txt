@@ -1,0 +1,51 @@
+GUÍA MANUAL: Limpiar archivos del repositorio
+==============================================
+
+Ya que Git no funciona desde GitHub Desktop, hazlo manualmente:
+
+OPCIÓN A - Desde GitHub.com (navegador):
+-----------------------------------------
+1. Ve a: https://github.com/TU_USUARIO/pruebaDID
+2. Entra a la carpeta "venv" → Click en "..." → Delete directory
+3. Busca el archivo ".env" (si aparece) → Click en 🗑️ → Commit
+4. Busca "__pycache__" (si aparece) → Delete directory
+5. En GitHub Desktop, haz "Fetch" y "Pull"
+
+
+OPCIÓN B - Desde CMD (con Git instalado):
+------------------------------------------
+1. Presiona Win + R
+2. Escribe: cmd
+3. Ejecuta estos comandos UNO POR UNO:
+
+cd C:\Users\patra\OneDrive\Documents\GitHub\pruebaDID
+git rm -r --cached .
+git add .
+git commit -m "Aplicar .gitignore"
+git push origin main
+
+
+OPCIÓN C - Borrar y re-subir:
+------------------------------
+1. Haz backup de tu proyecto en otra carpeta
+2. Elimina el repositorio local
+3. Clona de nuevo desde GitHub
+4. Copia los archivos necesarios (sin venv, sin .env)
+5. Commit y push
+
+
+VERIFICAR QUE FUNCIONÓ:
+-----------------------
+Ve a: https://github.com/TU_USUARIO/pruebaDID
+NO deberías ver:
+❌ Carpeta venv/
+❌ Archivo .env
+❌ Carpeta __pycache__/
+
+SÍ deberías ver:
+✅ app.py
+✅ templates/
+✅ static/
+✅ README.md
+✅ etc.
+
