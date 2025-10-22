@@ -1,4 +1,5 @@
 import os
+import time
 import xml.etree.ElementTree as ET
 from flask import Flask, request, jsonify, Response, send_file, render_template
 from flask_cors import CORS
@@ -690,7 +691,8 @@ Tu respuesta:
 @app.route("/")
 def index():
     """Página principal con D-ID avatar"""
-    return render_template("index.html")
+    asset_version = os.getenv("VERCEL_GIT_COMMIT_SHA", "")[:7] or str(int(time.time()))
+    return render_template("index.html", asset_version=asset_version)
 
 @app.route("/health")
 def health_check():
