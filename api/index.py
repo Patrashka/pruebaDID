@@ -77,3 +77,6 @@ def avatar_simple():
 
 # Vercel necesita esta exportación
 app.config['DEBUG'] = False
+
+# Handler para Vercel (WSGI)
+handler = app
