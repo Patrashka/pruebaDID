@@ -1,47 +1,11 @@
-# ============================================
-# CONFIGURACIÓN DE VARIABLES DE ENTORNO
-# ============================================
-# 
-# INSTRUCCIONES:
-# 1. Copia este archivo y renómbralo a ".env"
-# 2. Completa los valores necesarios
-# 3. NO compartas este archivo con tus API keys
-#
-# ============================================
-
 # ===== GOOGLE GEMINI API =====
-# Obtén tu API key en: https://makersuite.google.com/app/apikey
-GOOGLE_API_KEY=tu_api_key_de_google_aqui
+GOOGLE_GEMINI_API_KEY=tu_api_key_de_google_aqui
 
-# Modelo a usar (gemini-1.5-flash es gratis, gemini-pro requiere pago)
-GEMINI_MODEL=gemini-1.5-flash
+# ===== CONFIGURACIÓN DEL SERVIDOR =====
+PORT=8080
+FLASK_ENV=production
 
-# ===== CONFIGURACIÓN FLASK =====
-# Entorno: development, production, testing
-FLASK_ENV=development
-
-# Debug mode: True o False
-FLASK_DEBUG=True
-
-# Puerto del servidor
-PORT=5000
-
-# Secret key para Flask (genera una aleatoria para producción)
-SECRET_KEY=dev-secret-key-change-in-production
-
-# ===== D-ID CONFIGURATION (Opcional) =====
-# Si quieres cambiar las credenciales de D-ID
-# DID_CLIENT_KEY=tu_client_key
-# DID_AGENT_ID=tu_agent_id
-
-# ===== CONFIGURACIÓN AVANZADA =====
-# Número máximo de reportes en el historial
-MAX_REPORTES_HISTORIAL=10
-
-# Tokens máximos para respuestas de IA
-MAX_TOKENS_RESPUESTA=500
-MAX_TOKENS_REPORTE=400
-
-# Temperatura de la IA (0.0 - 1.0)
-TEMPERATURE=0.7
-
+# ===== D-ID CONFIGURATION =====
+# Estas son las credenciales que proporcionaste para D-ID
+DID_CLIENT_KEY=Z29vZ2xlLW9hdXRoMnwxMTU1ODgzNDk4MjgyOTQ5MzYwNzM6SHFkdzdaU0gtMklRZ29Nb2Rvb0JS
+DID_AGENT_ID=v2_agt_gRs4QB2l

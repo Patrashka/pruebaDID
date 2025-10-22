@@ -1,459 +1,499 @@
-// Estado de la aplicación
-let reconocimientoVoz = null;
-let grabando = false;
-let reporteActual = null;
+// ===== CONFIGURACIÓN GLOBAL =====
+const CONFIG = {
+    API_BASE_URL: window.location.origin,
+    SESSION_ID: 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+    VOICE_RECOGNITION_SUPPORTED: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
+};
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    inicializarApp();
+// ===== ESTADO DE LA APLICACIÓN =====
+let appState = {
+    isRecording: false,
+    recognition: null,
+    conversationHistory: [],
+    currentReport: '',
+    avatarLoaded: false
+};
+
+// ===== INICIALIZACIÓN =====
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🏥 Inicializando Consulta Médica Virtual...');
+    
+    initializeApp();
+    setupEventListeners();
+    updateCurrentTime();
+    initializeVoiceRecognition();
+    
+    // Actualizar hora cada minuto
+    setInterval(updateCurrentTime, 60000);
+    
+    console.log('✅ Aplicación inicializada correctamente');
 });
 
-function inicializarApp() {
-    // Inicializar Speech Recognition
-    inicializarReconocimientoVoz();
+// ===== INICIALIZACIÓN DE LA APLICACIÓN =====
+function initializeApp() {
+    // Verificar soporte de reconocimiento de voz
+    if (!CONFIG.VOICE_RECOGNITION_SUPPORTED) {
+        console.warn('⚠️ Reconocimiento de voz no soportado en este navegador');
+        const voiceBtn = document.getElementById('voice-btn');
+        if (voiceBtn) {
+            voiceBtn.style.display = 'none';
+        }
+    }
     
-    // Event listeners
-    document.getElementById('btn-voice').addEventListener('click', toggleGrabacion);
-    document.getElementById('btn-enviar').addEventListener('click', enviarConsulta);
-    document.getElementById('btn-limpiar').addEventListener('click', limpiarFormulario);
-    document.getElementById('btn-ver-reporte').addEventListener('click', mostrarModalReporte);
-    document.getElementById('btn-descargar-reporte').addEventListener('click', descargarReporte);
+    // Configurar el estado inicial del avatar
+    updateAvatarStatus('connecting', 'Conectando...');
     
-    // Modal
-    document.querySelector('.close').addEventListener('click', cerrarModal);
-    document.getElementById('modal-reporte').addEventListener('click', (e) => {
-        if (e.target.id === 'modal-reporte') {
-            cerrarModal();
+    // Configurar el textarea para auto-resize
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('input', autoResizeTextarea);
+    }
+}
+
+// ===== CONFIGURACIÓN DE EVENT LISTENERS =====
+function setupEventListeners() {
+    // Botón de envío
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+    }
+    
+    // Botón de voz
+    const voiceBtn = document.getElementById('voice-btn');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', toggleVoiceRecording);
+    }
+    
+    // Enter para enviar mensaje
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+    
+    // Event listeners para D-ID
+    setupDIDEventListeners();
+}
+
+// ===== CONFIGURACIÓN DE EVENT LISTENERS PARA D-ID =====
+function setupDIDEventListeners() {
+    // Escuchar eventos del avatar D-ID
+    window.addEventListener('message', function(event) {
+        if (event.origin !== 'https://agent.d-id.com') return;
+        
+        const data = event.data;
+        console.log('📡 Evento D-ID recibido:', data);
+        
+        switch (data.type) {
+            case 'agent:ready':
+                handleAvatarReady();
+                break;
+            case 'agent:speaking':
+                handleAvatarSpeaking();
+                break;
+            case 'agent:stopped':
+                handleAvatarStopped();
+                break;
+            case 'agent:error':
+                handleAvatarError(data.error);
+                break;
         }
     });
-    
-    // Historial
-    document.getElementById('historial-toggle').addEventListener('click', toggleHistorial);
-    document.getElementById('close-historial').addEventListener('click', toggleHistorial);
-    
-    // Cargar historial inicial
-    cargarHistorial();
-    
-    console.log('Aplicación inicializada correctamente');
 }
 
-// Speech Recognition
-function inicializarReconocimientoVoz() {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        reconocimientoVoz = new SpeechRecognition();
-        
-        reconocimientoVoz.continuous = false;
-        reconocimientoVoz.interimResults = false;
-        reconocimientoVoz.lang = 'es-ES';
-        
-        reconocimientoVoz.onstart = () => {
-            grabando = true;
-            actualizarUIGrabacion(true);
-            console.log('Reconocimiento de voz iniciado');
-        };
-        
-        reconocimientoVoz.onresult = (event) => {
-            const texto = event.results[0][0].transcript;
-            const input = document.getElementById('consulta-input');
-            
-            if (input.value.trim()) {
-                input.value += ' ' + texto;
-            } else {
-                input.value = texto;
-            }
-            
-            console.log('Texto reconocido:', texto);
-        };
-        
-        reconocimientoVoz.onerror = (event) => {
-            console.error('Error en reconocimiento de voz:', event.error);
-            grabando = false;
-            actualizarUIGrabacion(false);
-            
-            let mensaje = 'Error en el reconocimiento de voz';
-            if (event.error === 'no-speech') {
-                mensaje = 'No se detectó ninguna voz';
-            } else if (event.error === 'not-allowed') {
-                mensaje = 'Permiso de micrófono denegado';
-            }
-            
-            mostrarNotificacion(mensaje, 'error');
-        };
-        
-        reconocimientoVoz.onend = () => {
-            grabando = false;
-            actualizarUIGrabacion(false);
-            console.log('Reconocimiento de voz finalizado');
-        };
-        
-        console.log('Reconocimiento de voz inicializado');
-    } else {
-        console.warn('Reconocimiento de voz no soportado en este navegador');
-        document.getElementById('btn-voice').disabled = true;
-        document.getElementById('btn-voice').title = 'No soportado en este navegador';
+// ===== MANEJO DE EVENTOS DEL AVATAR D-ID =====
+function handleAvatarReady() {
+    console.log('✅ Avatar D-ID listo');
+    updateAvatarStatus('online', 'Avatar conectado');
+    appState.avatarLoaded = true;
+    
+    // Ocultar loading spinner
+    const loadingElement = document.querySelector('.avatar-loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
     }
 }
 
-function toggleGrabacion() {
-    if (!reconocimientoVoz) {
-        mostrarNotificacion('Reconocimiento de voz no disponible', 'error');
+function handleAvatarSpeaking() {
+    console.log('🗣️ Avatar hablando');
+    updateAvatarStatus('online', 'Avatar hablando...');
+}
+
+function handleAvatarStopped() {
+    console.log('🔇 Avatar detenido');
+    updateAvatarStatus('online', 'Avatar conectado');
+}
+
+function handleAvatarError(error) {
+    console.error('❌ Error en avatar D-ID:', error);
+    updateAvatarStatus('offline', 'Error en avatar');
+}
+
+// ===== ACTUALIZACIÓN DEL ESTADO DEL AVATAR =====
+function updateAvatarStatus(status, text) {
+    const statusIndicator = document.querySelector('.status-indicator');
+    const statusText = document.querySelector('.status-text');
+    
+    if (statusIndicator) {
+        statusIndicator.className = `status-indicator ${status}`;
+    }
+    
+    if (statusText) {
+        statusText.textContent = text;
+    }
+}
+
+// ===== RECONOCIMIENTO DE VOZ =====
+function initializeVoiceRecognition() {
+    if (!CONFIG.VOICE_RECOGNITION_SUPPORTED) return;
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    appState.recognition = new SpeechRecognition();
+    
+    appState.recognition.continuous = false;
+    appState.recognition.interimResults = false;
+    appState.recognition.lang = 'es-ES';
+    
+    appState.recognition.onstart = function() {
+        console.log('🎤 Iniciando reconocimiento de voz...');
+        appState.isRecording = true;
+        updateVoiceUI(true);
+    };
+    
+    appState.recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        console.log('🎤 Texto reconocido:', transcript);
+        
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+            messageInput.value = transcript;
+            autoResizeTextarea();
+        }
+        
+        appState.isRecording = false;
+        updateVoiceUI(false);
+    };
+    
+    appState.recognition.onerror = function(event) {
+        console.error('❌ Error en reconocimiento de voz:', event.error);
+        appState.isRecording = false;
+        updateVoiceUI(false);
+        
+        showNotification('Error en reconocimiento de voz: ' + event.error, 'error');
+    };
+    
+    appState.recognition.onend = function() {
+        console.log('🎤 Reconocimiento de voz finalizado');
+        appState.isRecording = false;
+        updateVoiceUI(false);
+    };
+}
+
+function toggleVoiceRecording() {
+    if (!CONFIG.VOICE_RECOGNITION_SUPPORTED) {
+        showNotification('Reconocimiento de voz no soportado en este navegador', 'warning');
         return;
     }
     
-    if (grabando) {
-        reconocimientoVoz.stop();
+    if (appState.isRecording) {
+        appState.recognition.stop();
     } else {
-        try {
-            reconocimientoVoz.start();
-        } catch (error) {
-            console.error('Error al iniciar grabación:', error);
-            mostrarNotificacion('Error al iniciar la grabación', 'error');
+        appState.recognition.start();
+    }
+}
+
+function updateVoiceUI(isRecording) {
+    const voiceBtn = document.getElementById('voice-btn');
+    const voiceStatus = document.getElementById('voice-status');
+    
+    if (voiceBtn) {
+        if (isRecording) {
+            voiceBtn.classList.add('recording');
+            voiceBtn.title = 'Detener grabación';
+        } else {
+            voiceBtn.classList.remove('recording');
+            voiceBtn.title = 'Grabar audio';
         }
     }
-}
-
-function actualizarUIGrabacion(activo) {
-    const btnVoz = document.getElementById('btn-voice');
-    const indicador = document.getElementById('recording-indicator');
     
-    if (activo) {
-        btnVoz.classList.add('recording');
-        btnVoz.querySelector('.text').textContent = 'Detener';
-        indicador.classList.remove('hidden');
-    } else {
-        btnVoz.classList.remove('recording');
-        btnVoz.querySelector('.text').textContent = 'Hablar';
-        indicador.classList.add('hidden');
+    if (voiceStatus) {
+        voiceStatus.style.display = isRecording ? 'flex' : 'none';
     }
 }
 
-// Enviar consulta
-async function enviarConsulta() {
-    const consultaInput = document.getElementById('consulta-input');
-    const consulta = consultaInput.value.trim();
+// ===== ENVÍO DE MENSAJES =====
+async function sendMessage() {
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
     
-    if (!consulta) {
-        mostrarNotificacion('Por favor, escribe o graba tu consulta', 'warning');
+    if (!message) {
+        showNotification('Por favor, escribe tu consulta médica', 'warning');
         return;
     }
     
-    // Mostrar loading
-    mostrarLoading(true);
-    ocultarRespuesta();
+    // Agregar mensaje del usuario al chat
+    addMessageToChat(message, 'user');
+    
+    // Limpiar input
+    messageInput.value = '';
+    autoResizeTextarea();
+    
+    // Deshabilitar botón de envío
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = '⏳';
+    }
     
     try {
-        const response = await fetch('/api/consulta', {
+        // Enviar consulta al backend
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/ai/voice-session`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ consulta: consulta })
+            body: JSON.stringify({
+                message: message,
+                session_id: CONFIG.SESSION_ID
+            })
         });
         
         if (!response.ok) {
-            throw new Error('Error en la respuesta del servidor');
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
         
-        // Guardar reporte actual
-        reporteActual = data.reporte;
+        // Agregar respuesta del bot al chat
+        addMessageToChat(data.ai_response, 'bot');
         
-        // Mostrar respuesta
-        mostrarRespuesta(data.respuesta);
+        // Actualizar reporte médico
+        updateMedicalReport(data.summary);
         
-        // Intentar comunicar con el avatar D-ID
-        try {
-            comunicarConAvatar(data.respuesta);
-        } catch (avatarError) {
-            console.warn('Error al comunicar con avatar:', avatarError);
+        // Reproducir audio si está disponible
+        if (data.audio_file) {
+            playAudioResponse(data.audio_file);
         }
         
-        // Actualizar historial
-        cargarHistorial();
-        
-        mostrarNotificacion('Consulta procesada exitosamente', 'success');
+        // Actualizar historial de conversación
+        appState.conversationHistory.push({
+            role: 'user',
+            content: message
+        });
+        appState.conversationHistory.push({
+            role: 'assistant',
+            content: data.ai_response
+        });
         
     } catch (error) {
-        console.error('Error al procesar consulta:', error);
-        mostrarNotificacion('Error al procesar la consulta. Verifica tu conexión y la API key.', 'error');
+        console.error('❌ Error al enviar mensaje:', error);
+        showNotification('Error al procesar la consulta. Verifica tu conexión.', 'error');
+        
+        // Agregar mensaje de error al chat
+        addMessageToChat('Lo siento, hubo un error al procesar tu consulta. Por favor, inténtalo de nuevo.', 'bot');
     } finally {
-        mostrarLoading(false);
-    }
-}
-
-function comunicarConAvatar(texto) {
-    // Intentar comunicar con el agente D-ID
-    const didAgent = document.querySelector('did-agent');
-    
-    if (didAgent && typeof didAgent.speak === 'function') {
-        didAgent.speak(texto);
-    } else {
-        console.log('Avatar D-ID no disponible o no soporta el método speak');
-    }
-}
-
-function mostrarRespuesta(respuesta) {
-    const container = document.getElementById('respuesta-container');
-    const textoRespuesta = document.getElementById('respuesta-texto');
-    
-    textoRespuesta.textContent = respuesta;
-    container.classList.remove('hidden');
-    
-    // Scroll suave a la respuesta
-    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function ocultarRespuesta() {
-    document.getElementById('respuesta-container').classList.add('hidden');
-}
-
-function mostrarLoading(mostrar) {
-    const loading = document.getElementById('loading');
-    if (mostrar) {
-        loading.classList.remove('hidden');
-    } else {
-        loading.classList.add('hidden');
-    }
-}
-
-function limpiarFormulario() {
-    document.getElementById('consulta-input').value = '';
-    ocultarRespuesta();
-    reporteActual = null;
-    mostrarNotificacion('Formulario limpiado', 'info');
-}
-
-// Modal de reporte
-function mostrarModalReporte() {
-    if (!reporteActual) {
-        mostrarNotificacion('No hay reporte disponible', 'warning');
-        return;
-    }
-    
-    const modal = document.getElementById('modal-reporte');
-    const contenido = document.getElementById('reporte-contenido');
-    
-    contenido.innerHTML = generarHTMLReporte(reporteActual);
-    modal.classList.remove('hidden');
-}
-
-function cerrarModal() {
-    document.getElementById('modal-reporte').classList.add('hidden');
-}
-
-function generarHTMLReporte(reporte) {
-    const analisis = reporte.analisis || {};
-    const fecha = new Date(reporte.timestamp).toLocaleString('es-ES');
-    
-    let html = `
-        <div class="reporte-item">
-            <h4>📅 Fecha y Hora</h4>
-            <p>${fecha}</p>
-        </div>
-        
-        <div class="reporte-item">
-            <h4>💬 Consulta Original</h4>
-            <p>${reporte.consulta}</p>
-        </div>
-        
-        <div class="reporte-item">
-            <h4>💊 Respuesta Proporcionada</h4>
-            <p>${reporte.respuesta}</p>
-        </div>
-    `;
-    
-    if (analisis.resumen) {
-        html += `
-            <div class="reporte-item">
-                <h4>📋 Resumen</h4>
-                <p>${analisis.resumen}</p>
-            </div>
-        `;
-    }
-    
-    if (analisis.sintomas) {
-        html += `
-            <div class="reporte-item">
-                <h4>🩺 Síntomas Identificados</h4>
-                <p>${analisis.sintomas}</p>
-            </div>
-        `;
-    }
-    
-    if (analisis.recomendaciones) {
-        html += `
-            <div class="reporte-item">
-                <h4>✅ Recomendaciones</h4>
-                <p>${analisis.recomendaciones}</p>
-            </div>
-        `;
-    }
-    
-    if (analisis.acciones) {
-        html += `
-            <div class="reporte-item">
-                <h4>🎯 Acciones Sugeridas</h4>
-                <p>${analisis.acciones}</p>
-            </div>
-        `;
-    }
-    
-    if (analisis.urgencia) {
-        const urgenciaColor = analisis.urgencia === 'Alto' ? 'danger' : 
-                             analisis.urgencia === 'Medio' ? 'warning' : 'success';
-        html += `
-            <div class="reporte-item" style="border-left-color: var(--${urgenciaColor}-color)">
-                <h4>⚠️ Nivel de Urgencia</h4>
-                <p><strong>${analisis.urgencia}</strong></p>
-            </div>
-        `;
-    }
-    
-    return html;
-}
-
-function descargarReporte() {
-    if (!reporteActual) {
-        mostrarNotificacion('No hay reporte para descargar', 'warning');
-        return;
-    }
-    
-    const texto = `
-REPORTE DE CONSULTA MÉDICA
-========================================
-
-Fecha: ${new Date(reporteActual.timestamp).toLocaleString('es-ES')}
-
-CONSULTA:
-${reporteActual.consulta}
-
-RESPUESTA:
-${reporteActual.respuesta}
-
-ANÁLISIS:
-${JSON.stringify(reporteActual.analisis, null, 2)}
-
-========================================
-IMPORTANTE: Este reporte es informativo y no reemplaza una consulta médica profesional.
-    `.trim();
-    
-    const blob = new Blob([texto], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reporte_medico_${Date.now()}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    mostrarNotificacion('Reporte descargado', 'success');
-}
-
-// Historial
-function toggleHistorial() {
-    const sidebar = document.getElementById('historial-sidebar');
-    sidebar.classList.toggle('active');
-    sidebar.classList.toggle('hidden');
-}
-
-async function cargarHistorial() {
-    try {
-        const response = await fetch('/api/historial');
-        const data = await response.json();
-        
-        const contenido = document.getElementById('historial-contenido');
-        
-        if (data.reportes && data.reportes.length > 0) {
-            contenido.innerHTML = data.reportes.map(reporte => {
-                const fecha = new Date(reporte.timestamp).toLocaleString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
-                return `
-                    <div class="historial-item" onclick="cargarConsultaHistorial('${reporte.timestamp}')">
-                        <div class="fecha">${fecha}</div>
-                        <div class="consulta">${reporte.consulta}</div>
-                    </div>
-                `;
-            }).join('');
-        } else {
-            contenido.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No hay consultas previas</p>';
+        // Rehabilitar botón de envío
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.textContent = '📤';
         }
-    } catch (error) {
-        console.error('Error al cargar historial:', error);
     }
 }
 
-function cargarConsultaHistorial(timestamp) {
-    // Esta función se puede expandir para mostrar el detalle de una consulta del historial
-    console.log('Cargar consulta:', timestamp);
-    mostrarNotificacion('Funcionalidad de detalle en desarrollo', 'info');
+// ===== AGREGAR MENSAJES AL CHAT =====
+function addMessageToChat(message, sender) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    
+    if (sender === 'bot') {
+        messageContent.innerHTML = `<strong>Asistente Médico:</strong> ${message}`;
+    } else {
+        messageContent.textContent = message;
+    }
+    
+    const messageTime = document.createElement('div');
+    messageTime.className = 'message-time';
+    messageTime.textContent = getCurrentTimeString();
+    
+    messageDiv.appendChild(messageContent);
+    messageDiv.appendChild(messageTime);
+    
+    chatMessages.appendChild(messageDiv);
+    
+    // Scroll al final
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Animación de entrada
+    messageDiv.classList.add('fade-in');
 }
 
-// Notificaciones
-function mostrarNotificacion(mensaje, tipo = 'info') {
+// ===== ACTUALIZACIÓN DEL REPORTE MÉDICO =====
+function updateMedicalReport(summary) {
+    const reportContent = document.getElementById('report-content');
+    if (!reportContent) return;
+    
+    if (summary && summary.trim()) {
+        appState.currentReport = summary;
+        
+        // Limpiar placeholder si existe
+        const placeholder = reportContent.querySelector('.report-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        
+        // Agregar nuevo resumen
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'medical-summary slide-up';
+        summaryDiv.innerHTML = `
+            <div class="summary-header">
+                <span class="summary-time">${getCurrentTimeString()}</span>
+            </div>
+            <div class="summary-content">${summary}</div>
+        `;
+        
+        reportContent.appendChild(summaryDiv);
+        
+        // Scroll al final del reporte
+        reportContent.scrollTop = reportContent.scrollHeight;
+    }
+}
+
+// ===== REPRODUCCIÓN DE AUDIO =====
+function playAudioResponse(audioFile) {
+    const audio = new Audio(`${CONFIG.API_BASE_URL}/tmp/${audioFile}`);
+    
+    audio.onloadstart = function() {
+        console.log('🔊 Cargando audio...');
+    };
+    
+    audio.oncanplay = function() {
+        console.log('🔊 Reproduciendo audio...');
+        audio.play().catch(error => {
+            console.warn('⚠️ No se pudo reproducir el audio:', error);
+        });
+    };
+    
+    audio.onerror = function(error) {
+        console.error('❌ Error al cargar audio:', error);
+    };
+}
+
+// ===== UTILIDADES =====
+function autoResizeTextarea() {
+    const textarea = document.getElementById('message-input');
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+}
+
+function updateCurrentTime() {
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+        timeElement.textContent = getCurrentTimeString();
+    }
+}
+
+function getCurrentTimeString() {
+    const now = new Date();
+    return now.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function showNotification(message, type = 'info') {
     // Crear elemento de notificación
-    const notif = document.createElement('div');
-    notif.className = `notificacion notif-${tipo}`;
-    notif.textContent = mensaje;
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
     
-    // Estilos inline
-    notif.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        background: ${tipo === 'success' ? '#10b981' : tipo === 'error' ? '#ef4444' : tipo === 'warning' ? '#f59e0b' : '#3b82f6'};
-        color: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
-        animation: slideIn 0.3s ease-out;
-        font-weight: 600;
-    `;
+    // Estilos para la notificación
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        padding: '15px 20px',
+        borderRadius: '10px',
+        color: 'white',
+        fontWeight: '500',
+        zIndex: '10000',
+        maxWidth: '300px',
+        wordWrap: 'break-word',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        transform: 'translateX(100%)',
+        transition: 'transform 0.3s ease'
+    });
     
-    document.body.appendChild(notif);
+    // Colores según el tipo
+    const colors = {
+        info: '#667eea',
+        success: '#48bb78',
+        warning: '#ed8936',
+        error: '#f56565'
+    };
     
-    // Eliminar después de 3 segundos
+    notification.style.backgroundColor = colors[type] || colors.info;
+    
+    // Agregar al DOM
+    document.body.appendChild(notification);
+    
+    // Animar entrada
     setTimeout(() => {
-        notif.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => notif.remove(), 300);
-    }, 3000);
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remover después de 5 segundos
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
 }
 
-// Agregar animaciones CSS para notificaciones
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
+// ===== MANEJO DE ERRORES GLOBALES =====
+window.addEventListener('error', function(event) {
+    console.error('❌ Error global:', event.error);
+    showNotification('Ha ocurrido un error inesperado', 'error');
+});
 
-console.log('App.js cargado correctamente');
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('❌ Promise rechazada:', event.reason);
+    showNotification('Error de conexión con el servidor', 'error');
+});
 
+// ===== FUNCIONES DE UTILIDAD ADICIONALES =====
+function formatMessageForDisplay(message) {
+    // Convertir saltos de línea a <br>
+    return message.replace(/\n/g, '<br>');
+}
+
+function sanitizeInput(input) {
+    // Limpiar input del usuario
+    return input.trim().replace(/[<>]/g, '');
+}
+
+// ===== EXPORTAR FUNCIONES PARA DEBUGGING =====
+window.MedicalApp = {
+    CONFIG,
+    appState,
+    sendMessage,
+    addMessageToChat,
+    updateMedicalReport,
+    showNotification
+};
+
+console.log('🏥 Consulta Médica Virtual - JavaScript cargado correctamente');

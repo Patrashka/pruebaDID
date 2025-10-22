@@ -2,18 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "app.py",
+      "src": "server_combined.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app.py"
+      "dest": "server_combined.py"
     }
   ],
   "env": {
     "FLASK_ENV": "production"
+  },
+  "functions": {
+    "server_combined.py": {
+      "maxDuration": 30
+    }
   }
 }
-

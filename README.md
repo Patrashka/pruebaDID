@@ -1,170 +1,190 @@
-# 🏥 Asistente Médico Virtual con D-ID Avatar
+# 🏥 Consulta Médica Virtual con D-ID Avatar
 
-Aplicación web con avatar médico interactivo usando D-ID, inteligencia artificial (Google Gemini), reconocimiento de voz y generación automática de reportes.
+Sistema de consultas médicas virtuales que integra un avatar de D-ID con inteligencia artificial (Google Gemini) para proporcionar asistencia médica interactiva.
 
 ## 🚀 Características
 
-- 🤖 **Avatar Médico Interactivo** (D-ID Agent)
-- 🧠 **IA Google Gemini** para respuestas médicas
-- 🎤 **Speech-to-Text** en español
-- 📋 **Reportes automáticos** descargables
-- 📜 **Historial de consultas**
-- 💻 **Interfaz moderna** y responsive
+- **Avatar D-ID**: Avatar virtual que habla y responde a consultas médicas
+- **IA Médica**: Integración con Google Gemini para respuestas médicas inteligentes
+- **Speech-to-Text**: Reconocimiento de voz para consultas por audio
+- **Text-to-Speech**: Respuestas en audio del avatar
+- **Reportes Médicos**: Generación automática de resúmenes de consultas
+- **Interfaz Moderna**: Diseño responsive y profesional
+- **Múltiples APIs**: Sistema modular con diferentes endpoints médicos
 
-## ⚡ Inicio Rápido
+## 🛠️ Tecnologías Utilizadas
 
-### 1. Clonar e Instalar
+- **Backend**: Flask (Python)
+- **IA**: Google Gemini API
+- **Avatar**: D-ID Studio API
+- **Audio**: Whisper (STT), gTTS (TTS)
+- **Frontend**: HTML5, CSS3, JavaScript
+- **Deployment**: Vercel
+
+## 📋 Requisitos Previos
+
+1. **Cuenta de Google Cloud** con API de Gemini habilitada
+2. **Cuenta de D-ID** con avatar configurado
+3. **Git** instalado
+4. **Cuenta de Vercel** para deployment
+
+## ⚙️ Instalación y Configuración
+
+### 1. Clonar el Repositorio
 
 ```bash
-# Clonar repositorio
-git clone https://github.com/TU_USUARIO/pruebaDID.git
+git clone <tu-repositorio>
 cd pruebaDID
+```
 
-# Crear entorno virtual e instalar dependencias
-python -m venv venv
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
+### 2. Configurar Variables de Entorno
+
+Copia el archivo de plantilla y configura tus API keys:
+
+```bash
+cp env_template.txt .env
+```
+
+Edita el archivo `.env` con tus credenciales:
+
+```env
+# Google Gemini API
+GOOGLE_GEMINI_API_KEY=tu_api_key_de_google_aqui
+
+# Configuración del servidor
+PORT=8080
+FLASK_ENV=production
+
+# D-ID Configuration (ya configuradas)
+DID_CLIENT_KEY=Z29vZ2xlLW9hdXRoMnwxMTU1ODgzNDk4MjgyOTQ5MzYwNzM6SHFkdzdaU0gtMklRZ29Nb2Rvb0JS
+DID_AGENT_ID=v2_agt_gRs4QB2l
+```
+
+### 3. Instalar Dependencias
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configurar API Key
+### 4. Configurar D-ID
 
-1. Obtén tu API key de Google Gemini: https://makersuite.google.com/app/apikey
-2. Crea archivo `.env` en la raíz:
+1. Ve a [D-ID Studio](https://studio.d-id.com/)
+2. Asegúrate de que tu avatar esté configurado
+3. Verifica que el dominio de Vercel esté en "Allowed Origins"
 
-```env
-GOOGLE_API_KEY=tu_api_key_aqui
-GEMINI_MODEL=gemini-pro
-FLASK_ENV=development
-PORT=5000
-```
+## 🚀 Deployment en Vercel
 
-### 3. Ejecutar
+### 1. Conectar con GitHub
 
-```bash
-# Windows
-run.bat
+1. Ve a [Vercel](https://vercel.com/)
+2. Conecta tu cuenta de GitHub
+3. Importa tu repositorio
 
-# Linux/Mac o manual
-python app.py
-```
+### 2. Configurar Variables de Entorno en Vercel
 
-Abre tu navegador en: `http://localhost:5000`
+En el dashboard de Vercel, ve a Settings > Environment Variables y agrega:
 
-## 🌐 Deploy en Vercel (Recomendado)
+- `GOOGLE_GEMINI_API_KEY`: Tu API key de Google Gemini
+- `FLASK_ENV`: `production`
 
-**¿Por qué Vercel?** HTTPS automático (requerido para D-ID y reconocimiento de voz)
+### 3. Deploy
 
-### Pasos:
+Vercel detectará automáticamente la configuración y desplegará la aplicación.
 
-1. **Push a GitHub:**
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
-   ```
+## 📱 Uso del Sistema
 
-2. **En Vercel:**
-   - Ve a https://vercel.com
-   - Importa tu repositorio de GitHub
-   - Configura variables de entorno:
-     - `GOOGLE_API_KEY` = tu_api_key
-     - `FLASK_ENV` = production
-     - `GEMINI_MODEL` = gemini-pro
-   - Click "Deploy"
+### Interfaz Principal
 
-3. **¡Listo!** Tu app estará en `https://tu-proyecto.vercel.app` con HTTPS automático
+1. **Avatar D-ID**: Se carga automáticamente en la sección izquierda
+2. **Chat**: Interfaz de conversación en la sección derecha
+3. **Reporte Médico**: Resumen automático de la consulta
 
-**Guía detallada:** Ver [DEPLOYMENT_VERCEL.md](DEPLOYMENT_VERCEL.md)
+### Funcionalidades
 
-## 📖 Uso
+- **Consulta por Texto**: Escribe tu consulta médica
+- **Consulta por Voz**: Usa el botón de micrófono para grabar
+- **Respuesta del Avatar**: El avatar D-ID responde con voz y texto
+- **Reporte Automático**: Se genera un resumen médico de la consulta
 
-### Consulta por Texto
-1. Escribe tu síntoma o consulta médica
-2. Click en "Enviar Consulta"
-3. El avatar responderá visualmente
+## 🔧 APIs Disponibles
 
-### Consulta por Voz
-1. Click en el botón de micrófono 🎤
-2. Habla claramente (requiere HTTPS en producción)
-3. El texto se transcribirá automáticamente
-4. Click "Enviar"
+El sistema incluye múltiples endpoints médicos:
 
-### Ver Reportes
-- Click en "Ver Reporte Detallado" después de cada consulta
-- Descarga el reporte en formato texto
-- Revisa el historial en el sidebar lateral
+### Consultas Básicas
+- `POST /api/ai/patient` - Consulta para pacientes
+- `POST /api/ai/doctor` - Consulta para doctores
 
-## 🛠️ Tecnologías
+### Audio y Voz
+- `POST /api/ai/speech-to-text` - Convertir audio a texto
+- `POST /api/ai/text-to-speech` - Convertir texto a audio
+- `POST /api/ai/voice-session` - Flujo completo de voz
 
-- **Backend:** Python, Flask
-- **IA:** Google Gemini Pro
-- **Avatar:** D-ID Agent SDK
-- **Frontend:** HTML5, CSS3, JavaScript (Web Speech API)
-- **Deployment:** Vercel
+### Análisis de Archivos
+- `POST /api/ai/file/analyze_json` - Analizar archivos médicos
+- `POST /api/ai/file/analyze_xml` - Analizar archivos (XML)
 
-## 📁 Estructura del Proyecto
+### Interacciones Avanzadas
+- `POST /api/ai/interaction` - Conversación con memoria
+- `POST /api/ai/conclusion` - Resumen final de consulta
 
-```
-pruebaDID/
-├── app.py                 # Backend Flask
-├── config.py              # Configuración
-├── templates/             # HTML
-│   └── index.html
-├── static/                # CSS y JS
-│   ├── styles.css
-│   └── app.js
-├── reportes/              # Reportes generados
-├── vercel.json            # Config Vercel
-├── requirements.txt       # Dependencias
-└── .env                   # Variables (crear manualmente)
-```
+## 🎯 Flujo de Trabajo
 
-## 🔧 Scripts Disponibles
+1. **Usuario inicia consulta** (texto o voz)
+2. **Sistema procesa input** (STT si es audio)
+3. **IA genera respuesta** (Google Gemini)
+4. **Avatar responde** (D-ID + TTS)
+5. **Reporte se actualiza** (resumen médico)
 
-### Windows:
-- `setup_venv.bat` - Configurar entorno automáticamente
-- `run.bat` - Ejecutar la aplicación
+## 🔒 Seguridad y Privacidad
 
-### Todos:
-- `python app.py` - Iniciar servidor
+- **HTTPS obligatorio** para D-ID
+- **Variables de entorno** para API keys
+- **Validación de input** en frontend y backend
+- **Advertencias médicas** incluidas en la interfaz
 
 ## 🐛 Solución de Problemas
 
-### Error: "GOOGLE_API_KEY not found"
-- Verifica que el archivo `.env` existe
-- Verifica que la API key es correcta
+### Avatar D-ID no carga
+- Verifica que el dominio esté en "Allowed Origins" en D-ID
+- Confirma que las credenciales sean correctas
+- Revisa la consola del navegador para errores
 
-### El avatar no carga
-- Verifica tu conexión a internet
-- En producción, asegúrate de usar HTTPS (Vercel lo provee)
+### Error en consultas IA
+- Verifica que `GOOGLE_GEMINI_API_KEY` esté configurada
+- Confirma que la API key sea válida
+- Revisa los logs de Vercel
 
-### El reconocimiento de voz no funciona
-- Requiere HTTPS (usa Vercel para deployment)
-- Usa Chrome o Edge
-- Permite acceso al micrófono
+### Problemas de audio
+- Verifica permisos de micrófono en el navegador
+- Confirma que el navegador soporte Web Speech API
+- Revisa la consola para errores de audio
 
-### Error al hacer consultas
-- Verifica que tu API key de Google Gemini es válida
-- Verifica que tienes crédito disponible en Google AI Studio
+## 📊 Monitoreo
 
-## ⚠️ Importante
+- **Logs de Vercel**: Revisa el dashboard para errores
+- **Consola del navegador**: Para errores de frontend
+- **Network tab**: Para problemas de API
 
-Este sistema es **solo para fines informativos y educativos**. No proporciona diagnósticos médicos reales ni debe usarse como sustituto de la atención médica profesional. Siempre consulta con un profesional de la salud calificado.
+## 🤝 Contribución
 
-## 📝 Licencia
+1. Fork el proyecto
+2. Crea una rama para tu feature
+3. Commit tus cambios
+4. Push a la rama
+5. Abre un Pull Request
 
-MIT License - Ver [LICENSE](LICENSE)
+## 📄 Licencia
 
-## 🔗 Enlaces Útiles
+Este proyecto está bajo la Licencia MIT. Ver el archivo LICENSE para más detalles.
 
-- [Google AI Studio](https://makersuite.google.com/app/apikey) - Obtener API key
-- [Vercel](https://vercel.com) - Deploy gratuito con HTTPS
-- [D-ID Documentation](https://docs.d-id.com/) - Info sobre el avatar
-- [Deployment Guide](DEPLOYMENT_VERCEL.md) - Guía detallada de Vercel
+## ⚠️ Disclaimer Médico
+
+**IMPORTANTE**: Este sistema es solo para orientación médica y no sustituye una consulta médica profesional. Siempre consulta con un médico calificado para diagnósticos y tratamientos.
+
+## 📞 Soporte
+
+Para soporte técnico o preguntas sobre el sistema, contacta al equipo de desarrollo.
 
 ---
 
-**¿Preguntas?** Revisa [DEPLOYMENT_VERCEL.md](DEPLOYMENT_VERCEL.md) para más detalles.
-
-**¡Desarrollado para ayudar con consultas médicas preliminares! 🏥✨**
+**Desarrollado con ❤️ usando D-ID Avatar y Google Gemini AI**
