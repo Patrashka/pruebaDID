@@ -77,7 +77,7 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     margin-bottom: 20px;
 }
 
@@ -490,6 +490,21 @@ body {
     height: 100% !important;
     min-width: 100% !important;
     min-height: 100% !important;
+}
+
+/* Estilos para el widget flotante de D-ID */
+.did-agent-widget {
+    position: relative !important;
+    width: 100% !important;
+    height: 500px !important;
+    min-height: 500px !important;
+}
+
+/* Asegurar que el widget se muestre correctamente */
+[data-did-agent] {
+    width: 100% !important;
+    height: 500px !important;
+    min-height: 500px !important;
 }
 
 /* Mejoras de accesibilidad */
