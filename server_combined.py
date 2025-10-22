@@ -692,7 +692,37 @@ def health_check():
     """Health check para Vercel"""
     return jsonify({"status": "ok", "message": "Consulta Médica Virtual API funcionando"})
 
+@app.route("/api/test-gemini")
+def test_gemini():
+    """Endpoint para probar la conexión con Gemini"""
+    try:
+        api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
+        if not api_key:
+            return jsonify({
+                'error': 'GOOGLE_GEMINI_API_KEY no está configurada',
+                'solucion': 'Configura GOOGLE_GEMINI_API_KEY en las variables de entorno de Vercel'
+            }), 400
+        
+        # Probar conexión con Gemini
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content("Di hola")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Conexión con Gemini exitosa',
+            'respuesta': response.text,
+            'api_key_preview': f'{api_key[:8]}...{api_key[-4:]}' if len(api_key) > 12 else 'key muy corta'
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'tipo_error': type(e).__name__,
+            'traceback': traceback.format_exc(),
+            'api_key_configurada': bool(os.getenv('GOOGLE_GEMINI_API_KEY'))
+        }), 500
+
 # ===== MAIN =====
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))
+    port = int(os.getenv("PORT", 5000))  # Cambiado de 8080 a 5000
     app.run(host="0.0.0.0", port=port, debug=True)

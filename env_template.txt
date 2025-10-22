@@ -2,7 +2,7 @@
 GOOGLE_GEMINI_API_KEY=tu_api_key_de_google_aqui
 
 # ===== CONFIGURACIÓN DEL SERVIDOR =====
-PORT=8080
+PORT=5000
 FLASK_ENV=production
 
 # ===== D-ID CONFIGURATION =====
