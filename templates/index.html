@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Médico Virtual - D-ID Avatar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 Asistente Médico Virtual</h1>
+            <p class="subtitle">Consulta con nuestro avatar médico inteligente</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Avatar D-ID -->
+            <div class="avatar-section">
+                <h2>Avatar Médico</h2>
+                <div id="did-avatar-container" class="avatar-container"></div>
+                <div class="avatar-status" id="avatar-status">
+                    <span class="status-indicator"></span>
+                    <span id="status-text">Listo para atender</span>
+                </div>
+            </div>
+
+            <!-- Panel de consulta -->
+            <div class="consultation-section">
+                <h2>Realiza tu Consulta</h2>
+                
+                <!-- Área de texto para la consulta -->
+                <div class="input-group">
+                    <label for="consulta-input">Describe tus síntomas o preocupación médica:</label>
+                    <textarea 
+                        id="consulta-input" 
+                        placeholder="Ej: Tengo dolor de cabeza persistente desde hace 3 días..."
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="action-buttons">
+                    <button id="btn-voice" class="btn btn-voice" title="Grabar voz">
+                        <span class="icon">🎤</span>
+                        <span class="text">Hablar</span>
+                    </button>
+                    <button id="btn-enviar" class="btn btn-primary">
+                        <span class="icon">📤</span>
+                        <span class="text">Enviar Consulta</span>
+                    </button>
+                    <button id="btn-limpiar" class="btn btn-secondary">
+                        <span class="icon">🗑️</span>
+                        <span class="text">Limpiar</span>
+                    </button>
+                </div>
+
+                <!-- Indicador de grabación -->
+                <div id="recording-indicator" class="recording-indicator hidden">
+                    <span class="pulse"></span>
+                    Grabando... Habla ahora
+                </div>
+
+                <!-- Área de respuesta -->
+                <div id="respuesta-container" class="respuesta-container hidden">
+                    <h3>Respuesta del Asistente:</h3>
+                    <div id="respuesta-texto" class="respuesta-texto"></div>
+                    
+                    <button id="btn-ver-reporte" class="btn btn-outline">
+                        <span class="icon">📋</span>
+                        Ver Reporte Detallado
+                    </button>
+                </div>
+
+                <!-- Loading spinner -->
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Procesando consulta...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para reporte -->
+        <div id="modal-reporte" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>📋 Reporte de Consulta Médica</h2>
+                <div id="reporte-contenido" class="reporte-contenido"></div>
+                <button id="btn-descargar-reporte" class="btn btn-primary">
+                    <span class="icon">💾</span>
+                    Descargar Reporte
+                </button>
+            </div>
+        </div>
+
+        <!-- Historial (sidebar) -->
+        <div class="historial-toggle" id="historial-toggle">
+            <span>📜 Historial</span>
+        </div>
+        <div class="historial-sidebar hidden" id="historial-sidebar">
+            <div class="historial-header">
+                <h3>Historial de Consultas</h3>
+                <button class="close-historial" id="close-historial">&times;</button>
+            </div>
+            <div id="historial-contenido" class="historial-contenido">
+                <p class="loading-text">Cargando historial...</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>⚠️ <strong>Importante:</strong> Este es un asistente informativo. No reemplaza la consulta con un profesional de la salud.</p>
+        </footer>
+    </div>
+
+    <!-- D-ID Agent Script -->
+    <script type="module"
+        src="https://agent.d-id.com/v2/index.js"
+        data-mode="full"
+        data-client-key="Z29vZ2xlLW9hdXRoMnwxMTU1ODgzNDk4MjgyOTQ5MzYwNzM6SHFkdzdaU0gtMklRZ29Nb2Rvb0JS"
+        data-agent-id="v2_agt_gRs4QB2l"
+        data-name="did-agent"
+        data-monitor="true"
+        data-target-id="did-avatar-container">
+    </script>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
+
